@@ -3,6 +3,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,14 +91,32 @@ public class Main implements ActionListener {
         String confirmPassword = confirmPasswordText.getText();
         if(!isValidEmail(email)){
             output.setText("Invalid email: use name@domain.extension");
+        } else if(password.length()<4){
+            output.setText("Passwords is shorter than 4 characters");
         } else if(!password.equals(confirmPassword)){
             output.setText("Passwords do not match");
         } else {
             try{
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                Connection con = DriverManager.getConnection("");
+                DriverManager.setLoginTimeout(10);
+                Connection con = DriverManager.getConnection(
+                        "jdbc:mysql://db4free.net:3306/smartgas?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&connectTimeout=10000",
+                        "admin678",
+                        "passwordpassword"
+                );
+                Statement stm = con.createStatement();
+                String sql = String.format("INSERT INTO users (email, name, password) VALUES (\"%s\", \"%s\", \"%s\")", email, email.split("@")[0], password);
+                System.out.println(sql);
+                int rows = stm.executeUpdate(sql);
+                System.out.println(rows);
+//                if (rs){
+//                    frame.dispose();
+//                }
             } catch (Exception ex){
-                output.setText("Error connecting to database");
+                if(ex.getMessage().split("\\s+")[0] == "Duplicate"){
+                    output.setText("account already exists");
+                }
+                System.out.println(ex.getMessage());
             }
         }
 
